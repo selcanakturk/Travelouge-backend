@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Route, RouteImage
+from routes.models import Route, RouteImage
 
 class RouteImageSerializer(serializers.ModelSerializer):
     class Meta:
@@ -12,4 +12,4 @@ class RouteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Route
-        fields = ['id', 'user', 'title', 'description', 'images']
+        fields = ['id', 'user', 'title', 'description', 'created_at', 'is_deleted', 'images']

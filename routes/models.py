@@ -6,13 +6,14 @@ User = get_user_model()
 class Route(models.Model):
     """Kullanıcıların oluşturduğu seyahat rotalarını temsil eder"""
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="routes")
-    title = models.CharField(max_length=255)
+    title = models.CharField(max_length=255, default="Untitled", unique=True,null=False, blank=False)
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     is_deleted = models.BooleanField(default=False)
 
     def __str__(self):
         return self.title
+
 
 class RouteImage(models.Model):
     """Rotaya bağlı birden fazla fotoğrafı saklayan model"""

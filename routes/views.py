@@ -1,21 +1,45 @@
+from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
-from .models import Route, RouteImage
-from .serializers import RouteSerializer
+from rest_framework.decorators import api_view, permission_classes
+from routes.models import Route, RouteImage
+from routes.serializers import RouteSerializer, RouteImageSerializer
 
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])  # Kullanıcının giriş yapması zorunlu
-def route_create(request):
-    user = request.user
-    title = request.data.get('title')
-    description = request.data.get('description')
-    images = request.FILES.getlist('images')  # Birden fazla dosya al
 
-    route = Route.objects.create(user=user, title=title, description=description)
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def route_list(request):
+    """Rotaları listele veya yeni rota ekle"""
+    if request.method == 'GET':
+        routes = Route.objects.all()
+        serializer = RouteSerializer(routes, many=True)
+        return Response(serializer.data)
 
-    for image in images:
-        RouteImage.objects.create(route=route, image=image)  # Her görseli ayrı kaydet
+    elif request.method == 'POST':
+        serializer = RouteSerializer(data=request.data)
+        if serializer.is_valid():
+            # Yeni rotayı kaydet
+            route = serializer.save(user=request.user)  # kullanıcıyı almak için request.user kullan
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    serializer = RouteSerializer(route)
-    return Response(serializer.data, status=201)
+@api_view(['GET', 'POST'])
+def route_detail(request, pk):
+    """Belirli bir rotayı detaylı göster veya ona resim ekle"""
+    try:
+        route = Route.objects.get(pk=pk)
+    except Route.DoesNotExist:
+        return Response({"error": "Route not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        serializer = RouteSerializer(route)
+        return Response(serializer.data)
+
+    elif request.method == 'POST':
+        # Rota ile ilişkilendirilen bir resim ekle
+        serializer = RouteImageSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(route=route)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

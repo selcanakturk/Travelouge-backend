@@ -1,11 +1,13 @@
 from django.urls import path, include
-# from rest_framework.routers import DefaultRouter
-from .views import route_create
+from routes import views
+from routes.views import route_list, route_detail  # route_create yerine route_list
 
 # # Router tanımlaması
 # router = DefaultRouter()
 # router.register('routes', RouteViewSet)  # 'api/routes' için RouteViewSet kaydettik
 
 urlpatterns = [
-   path('routes/', route_create, name='route-create'),  # Tüm URL'leri include ettik
+    path('routes/', views.route_list, name='route_list'),  # Tüm rotaları listele veya yeni rota ekle
+    path('routes/<int:pk>/', views.route_detail, name='route_detail'),  # Belirli rotayı göster veya resim ekle
+   # path('api/routes/', get_routes, name="get_routes"),
 ]
