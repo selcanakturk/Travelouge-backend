@@ -66,3 +66,13 @@ def route_detail(request, pk):
             serializer.save(route=route)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+@api_view(['GET'])
+@permission_classes([])  # Giriş yapmadan da erişilebilir istersen AllowAny da yazabilirsin
+def public_route_list(request):
+    """
+    Tüm kullanıcıların rotalarını döndürür. (Search sayfası için)
+    """
+    routes = Route.objects.all().order_by('-created_at')  # isteğe göre sıralanabilir
+    serializer = RouteSerializer(routes, many=True)
+    return Response(serializer.data)
