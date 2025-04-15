@@ -22,3 +22,11 @@ class RouteImage(models.Model):
 
     def __str__(self):
         return f"{self.route.title} - {self.image.url}"
+    
+class RouteCoordinate(models.Model):
+    route = models.ForeignKey(Route, on_delete=models.CASCADE, related_name="coordinates")
+    latitude = models.FloatField()
+    longitude = models.FloatField()
+
+    def __str__(self):
+        return f"{self.route.title} ({self.latitude}, {self.longitude})"

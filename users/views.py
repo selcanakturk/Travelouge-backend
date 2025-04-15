@@ -9,40 +9,21 @@ from rest_framework.authtoken.models import Token
 from .serializers import UserRegisterSerializer, UserSerializer
 from django.contrib.auth.hashers import make_password
 
-
 User = get_user_model()
 
-# Kullanıcı Kaydı için RegisterView sınıfı yerine UserRegisterView kullanılabilir.
 class UserRegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserRegisterSerializer
     permission_classes = [AllowAny]
 
-    def post(self, request):
-        username = request.data.get("username")
-        email = request.data.get("email")
-        password = request.data.get("password")
-        first_name = request.data.get("first_name")
-        last_name = request.data.get("last_name") 
-        #bu işlemler genelde serailizerda ya da services.py dosyasında yapılır. amaç viewi temiz tutmak. 
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
 
-        # Kullanıcı adı ve e-posta kontrolü
-        if User.objects.filter(username=username).exists():
-            return Response({"message": "Username already exists!"}, status=status.HTTP_400_BAD_REQUEST)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "Registration successful!"}, status=status.HTTP_201_CREATED)
 
-        if User.objects.filter(email=email).exists():
-            return Response({"message": "Email already exists!"}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Yeni kullanıcı oluşturulması
-        user = User.objects.create(
-            username=username,
-            email=email,
-            password=make_password(password),  # Şifreyi hash'leme
-            first_name=first_name,
-            last_name=last_name
-        )
-
-        return Response({"message": "Registration successful!"}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LoginView(APIView):
@@ -61,21 +42,18 @@ class LoginView(APIView):
             })
         else:
             return Response({"message": "Invalid credentials!"}, status=status.HTTP_401_UNAUTHORIZED)
-        
 
 
-
-# Profil Güncelleme için UserProfileView kullanıyoruz
 class UserProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
-        return self.request.user  # Sadece oturum açan kullanıcının verisini döndürür
+        return self.request.user
 
     def put(self, request, *args, **kwargs):
         user = self.get_object()
-        serializer = UserSerializer(user, data=request.data, partial=True)  # Kısmi güncelleme
+        serializer = UserSerializer(user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
