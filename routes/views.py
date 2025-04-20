@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from routes.models import Route, RouteCoordinate, RouteImage
 from routes.serializers import RouteSerializer, RouteImageSerializer
 import json
+from django.utils import timezone
 
 
 @api_view(['GET', 'POST'])
@@ -47,32 +48,42 @@ def route_list(request):
             return Response(RouteSerializer(route).data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-@api_view(['GET', 'POST'])
+@api_view(['GET', 'PUT', 'DELETE'])
+@permission_classes([IsAuthenticated])
 def route_detail(request, pk):
-    """Belirli bir rotayı detaylı göster veya ona resim ekle"""
     try:
         route = Route.objects.get(pk=pk)
     except Route.DoesNotExist:
         return Response({"error": "Route not found"}, status=status.HTTP_404_NOT_FOUND)
 
+    # ❗️ Sadece rotayı oluşturan kullanıcı işlem yapabilir
+    if route.user != request.user:
+        return Response({"error": "You do not have permission to modify this route."},
+                        status=status.HTTP_403_FORBIDDEN)
+
     if request.method == 'GET':
         serializer = RouteSerializer(route)
         return Response(serializer.data)
 
-    elif request.method == 'POST':
-        # Rota ile ilişkilendirilen bir resim ekle
-        serializer = RouteImageSerializer(data=request.data)
+    elif request.method == 'PUT':
+        serializer = RouteSerializer(route, data=request.data, partial=True)
         if serializer.is_valid():
-            serializer.save(route=route)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            serializer.save()
+            return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    elif request.method == 'DELETE':
+     route.is_deleted = True
+    route.deleted_at = timezone.now()  # 🆕 zamanı kaydet
+    route.save()
+    return Response({"message": "Route marked as deleted."}, status=status.HTTP_200_OK)
     
 @api_view(['GET'])
-@permission_classes([])  # Giriş yapmadan da erişilebilir istersen AllowAny da yazabilirsin
+@permission_classes([])
 def public_route_list(request):
     """
     Tüm kullanıcıların rotalarını döndürür. (Search sayfası için)
     """
-    routes = Route.objects.all().order_by('-created_at')  # isteğe göre sıralanabilir
+    routes = Route.objects.select_related("user").prefetch_related("images", "coordinates").order_by('-created_at')
     serializer = RouteSerializer(routes, many=True)
     return Response(serializer.data)
