@@ -6,14 +6,16 @@ class RouteImageSerializer(serializers.ModelSerializer):
         model = RouteImage
         fields = ['id', 'image']
 
+
 class RouteCoordinateSerializer(serializers.ModelSerializer):
     class Meta:
         model = RouteCoordinate
         fields = ["latitude", "longitude"]
 
+
 class RouteSerializer(serializers.ModelSerializer):
-    user = serializers.SerializerMethodField()      # ✅ Kullanıcı ID
-    username = serializers.SerializerMethodField()  # ✅ Kullanıcı adı
+    user = serializers.SerializerMethodField()
+    username = serializers.SerializerMethodField()
     images = RouteImageSerializer(many=True, read_only=True)
     coordinates = RouteCoordinateSerializer(many=True, read_only=True)
 
@@ -23,7 +25,7 @@ class RouteSerializer(serializers.ModelSerializer):
             'id', 'user', 'username',
             'title', 'description',
             'created_at', 'is_deleted',
-            'images', 'coordinates'
+            'images', 'coordinates',
         ]
 
     def get_user(self, obj):
@@ -31,3 +33,10 @@ class RouteSerializer(serializers.ModelSerializer):
 
     def get_username(self, obj):
         return obj.user.username if obj.user else "unknown"
+
+    def update(self, instance, validated_data):
+        # Title ve description güncelle
+        instance.title = validated_data.get('title', instance.title)
+        instance.description = validated_data.get('description', instance.description)
+        instance.save()
+        return instance
