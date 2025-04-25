@@ -5,11 +5,20 @@ from django.contrib.auth.hashers import make_password
 User = get_user_model()
 
 class UserSerializer(serializers.ModelSerializer):
+    profile_picture = serializers.ImageField(required=False, allow_null=True)
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'first_name', 'last_name')
+        fields = ('id', 'username', 'email', 'first_name', 'last_name', 'bio', 'profile_picture')
 
-
+    # def get_profile_picture(self, obj):
+    #     request = self.context.get('request')
+    #     if obj.profile_picture:
+    #         url = obj.profile_picture.url
+    #         if request is not None:
+    #             return request.build_absolute_uri(url)
+    #         return url
+    #     return None
+    
 class UserRegisterSerializer(serializers.ModelSerializer):
     confirm_password = serializers.CharField(write_only=True)
 

@@ -15,11 +15,11 @@ from django.utils import timezone
 def route_list(request):
     if request.method == 'GET':
         routes = Route.objects.filter(user=request.user)
-        serializer = RouteSerializer(routes, many=True)
+        serializer = RouteSerializer(routes, many=True, context={'request': request})
         return Response(serializer.data)
 
     elif request.method == 'POST':
-        serializer = RouteSerializer(data=request.data)
+        serializer = RouteSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             route = serializer.save(user=request.user)
 
@@ -42,8 +42,7 @@ def route_list(request):
                     image=image_file
                 )
 
-            return Response(RouteSerializer(route).data, status=status.HTTP_201_CREATED)
-
+            return Response(RouteSerializer(route, context={'request': request}).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -61,11 +60,11 @@ def route_detail(request, pk):
                         status=status.HTTP_403_FORBIDDEN)
 
     if request.method == 'GET':
-        serializer = RouteSerializer(route)
+        serializer = RouteSerializer(route, context={'request': request})
         return Response(serializer.data)
 
     elif request.method in ['PUT', 'PATCH']:
-        serializer = RouteSerializer(route, data=request.data, partial=True)
+        serializer = RouteSerializer(route, data=request.data, partial=True, context={'request': request})
         if serializer.is_valid():
             serializer.save()
 
@@ -97,7 +96,7 @@ def route_detail(request, pk):
             for image_file in request.FILES.getlist('images'):
                 RouteImage.objects.create(route=route, image=image_file)
 
-            return Response(RouteSerializer(route).data)
+            return Response(RouteSerializer(route, context={'request': request}).data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == 'DELETE':
@@ -111,5 +110,5 @@ def route_detail(request, pk):
 @permission_classes([])
 def public_route_list(request):
     routes = Route.objects.select_related("user").prefetch_related("images", "coordinates").order_by('-created_at')
-    serializer = RouteSerializer(routes, many=True)
+    serializer = RouteSerializer(routes, many=True, context={'request': request})
     return Response(serializer.data)

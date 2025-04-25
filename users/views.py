@@ -1,13 +1,12 @@
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
-from django.contrib.auth import get_user_model
-from django.contrib.auth import authenticate
+from django.contrib.auth import get_user_model, authenticate
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
-from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
 from .serializers import UserRegisterSerializer, UserSerializer
 from django.contrib.auth.hashers import make_password
+from rest_framework.parsers import MultiPartParser, FormParser
 
 User = get_user_model()
 
@@ -18,21 +17,18 @@ class UserRegisterView(generics.CreateAPIView):
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
-
         if serializer.is_valid():
             serializer.save()
             return Response({"message": "Registration successful!"}, status=status.HTTP_201_CREATED)
-
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
 class LoginView(APIView):
+    permission_classes = [AllowAny]
+
     def post(self, request):
         username = request.data.get("username")
         password = request.data.get("password")
-
         user = authenticate(username=username, password=password)
-
         if user is not None:
             token, _ = Token.objects.get_or_create(user=user)
             return Response({
@@ -43,24 +39,34 @@ class LoginView(APIView):
         else:
             return Response({"message": "Invalid credentials!"}, status=status.HTTP_401_UNAUTHORIZED)
 
-
 class UserProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
 
     def get_object(self):
         return self.request.user
 
     def put(self, request, *args, **kwargs):
         user = self.get_object()
-        serializer = UserSerializer(user, data=request.data, partial=True)
+        print("GÖNDERİLEN DOSYALAR:", request.FILES)
+        print("GÖNDERİLEN DATA:", request.data)
+
+        # 🔥🔥🔥 BURASI EKLENDİ: Önce eski fotoğrafı sil
+        if 'profile_picture' in request.FILES:
+            if user.profile_picture:
+                user.profile_picture.delete(save=False)
+
+        serializer = UserSerializer(user, data=request.data, partial=True, context={'request': request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
-        return Response(serializer.errors, status=400)
-    
-    from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def get(self, request, *args, **kwargs):
+        user = self.get_object()
+        serializer = UserSerializer(user, context={'request': request})
+        return Response(serializer.data)
 
 class ChangePasswordView(APIView):
     permission_classes = [IsAuthenticated]
