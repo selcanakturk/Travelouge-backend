@@ -1,5 +1,7 @@
 from rest_framework import generics, permissions, status
+from rest_framework.generics import RetrieveAPIView
 from rest_framework.response import Response
+from users.models import User
 from django.contrib.auth import get_user_model, authenticate
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
@@ -89,3 +91,9 @@ class ChangePasswordView(APIView):
 
         return Response({"message": "Şifre başarıyla değiştirildi."},
                         status=status.HTTP_200_OK)
+    
+class PublicUserProfileView(RetrieveAPIView):
+     queryset = User.objects.all()
+     serializer_class = UserSerializer
+     permission_classes = [AllowAny]
+     lookup_field = 'id'

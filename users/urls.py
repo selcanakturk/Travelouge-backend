@@ -1,5 +1,5 @@
 from django.urls import path
-from users.views import UserRegisterView, LoginView, UserProfileView, ChangePasswordView
+from users.views import UserRegisterView, LoginView, UserProfileView, ChangePasswordView, PublicUserProfileView
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -8,6 +8,7 @@ urlpatterns = [
     path('login/', LoginView.as_view(), name='user-login'),
     path('profile/', UserProfileView.as_view(), name='user-profile'),
     path('change-password/', ChangePasswordView.as_view(), name='change-password'),
+    path('users/<int:id>/', PublicUserProfileView.as_view(), name='public-user-profile'),
 ] 
 
 if settings.DEBUG:
