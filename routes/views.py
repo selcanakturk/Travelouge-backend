@@ -73,15 +73,15 @@ def comments_list_create(request, pk):
         Comment.objects.create(user=request.user, route=route, text=text)
         return Response({"message": "Comment added"}, status=status.HTTP_201_CREATED)
 
-def toggle_like(request, route_id):
-    user = request.user
-    try:
-        like = Like.objects.get(user=user, route_id=route_id)
-        like.delete()
-        return Response({"liked": False}, status=status.HTTP_200_OK)
-    except Like.DoesNotExist:
-        Like.objects.create(user=user, route_id=route_id)
-        return Response({"liked": True}, status=status.HTTP_201_CREATED)
+# def toggle_like(request, route_id):
+#     user = request.user
+#     try:
+#         like = Like.objects.get(user=user, route_id=route_id)
+#         like.delete()
+#         return Response({"liked": False}, status=status.HTTP_200_OK)
+#     except Like.DoesNotExist:
+#         Like.objects.create(user=user, route_id=route_id)
+#         return Response({"liked": True}, status=status.HTTP_201_CREATED)
 
 def comment_list_create(request, route_id):
     if request.method == 'GET':
@@ -105,7 +105,8 @@ def route_detail(request, pk):
     except Route.DoesNotExist:
         return Response({"error": "Route not found"}, status=status.HTTP_404_NOT_FOUND)
 
-    if route.user != request.user:
+    if request.method in ['PUT', 'PATCH', 'DELETE']:
+     if route.user != request.user:
         return Response({"error": "You do not have permission to modify this route."},
                         status=status.HTTP_403_FORBIDDEN)
 
@@ -163,6 +164,8 @@ def public_route_list(request):
     serializer = RouteSerializer(routes, many=True, context={'request': request})
     return Response(serializer.data)
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def is_liked(request, pk):
     try:
         route = Route.objects.get(pk=pk)
@@ -170,7 +173,10 @@ def is_liked(request, pk):
         return Response({"error": "Route not found"}, status=status.HTTP_404_NOT_FOUND)
 
     liked = Like.objects.filter(user=request.user, route=route).exists()
-    return Response({"is_liked": liked}, status=status.HTTP_200_OK)
+    return Response({
+        "is_liked": liked,
+        "likes_count": route.likes.count()
+    }, status=status.HTTP_200_OK)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
