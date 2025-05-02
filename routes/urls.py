@@ -1,6 +1,6 @@
 from django.urls import path, include
 from routes import views
-from routes.views import comments_list_create, public_route_list, route_list, route_detail ,toggle_like, comment_list_create
+from routes.views import comments_list_create, public_route_list, route_list, route_detail ,toggle_like, comment_list_create, popular_routes
 
 
 urlpatterns = [
@@ -11,5 +11,6 @@ urlpatterns = [
     path('routes/<int:pk>/is-liked/', views.is_liked, name='is_liked'),
     path('routes/<int:pk>/comments/', comments_list_create, name='comments_list_create'),
     path('routes/<int:route_id>/comments/<int:comment_id>/', views.comment_detail, name='comment_detail'),
+    path('routes/popular/', popular_routes, name='popular-routes')
     
 ]

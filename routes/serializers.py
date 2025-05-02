@@ -34,7 +34,7 @@ class RouteSerializer(serializers.ModelSerializer):
             'title', 'description',
             'created_at', 'is_deleted',
             'images', 'coordinates', 'likes_count', 'comments_count',
-            'is_liked_by_current_user',
+            'is_liked_by_current_user', 
         ]
 
     def get_user(self, obj):

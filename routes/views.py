@@ -2,12 +2,14 @@ from rest_framework.decorators import api_view, permission_classes, parser_class
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from routes.models import Route, RouteCoordinate, RouteImage, Like, Comment
 from routes.serializers import RouteSerializer, RouteImageSerializer, LikeSerializer, CommentSerializer
 import json
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
+from django.db.models import Count
+
 
 
 @api_view(['GET', 'POST'])
@@ -72,16 +74,6 @@ def comments_list_create(request, pk):
         
         Comment.objects.create(user=request.user, route=route, text=text)
         return Response({"message": "Comment added"}, status=status.HTTP_201_CREATED)
-
-# def toggle_like(request, route_id):
-#     user = request.user
-#     try:
-#         like = Like.objects.get(user=user, route_id=route_id)
-#         like.delete()
-#         return Response({"liked": False}, status=status.HTTP_200_OK)
-#     except Like.DoesNotExist:
-#         Like.objects.create(user=user, route_id=route_id)
-#         return Response({"liked": True}, status=status.HTTP_201_CREATED)
 
 def comment_list_create(request, route_id):
     if request.method == 'GET':
@@ -177,6 +169,20 @@ def is_liked(request, pk):
         "is_liked": liked,
         "likes_count": route.likes.count()
     }, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+@permission_classes([AllowAny])  # Herkes erişebilir
+def popular_routes(request):
+    routes = (
+        Route.objects
+        .filter(is_deleted=False)
+        .annotate(likes_count=Count('likes'))
+        .order_by('-likes_count')[:6]  # en çok beğenilen ilk 10
+        .select_related('user')
+        .prefetch_related('images', 'coordinates')
+    )
+    serializer = RouteSerializer(routes, many=True, context={'request': request})
+    return Response(serializer.data)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])

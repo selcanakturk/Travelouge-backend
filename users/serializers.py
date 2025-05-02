@@ -10,15 +10,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ('id', 'username', 'email', 'first_name', 'last_name', 'bio', 'profile_picture')
 
-    # def get_profile_picture(self, obj):
-    #     request = self.context.get('request')
-    #     if obj.profile_picture:
-    #         url = obj.profile_picture.url
-    #         if request is not None:
-    #             return request.build_absolute_uri(url)
-    #         return url
-    #     return None
-    
+  
 class UserRegisterSerializer(serializers.ModelSerializer):
     confirm_password = serializers.CharField(write_only=True)
 
