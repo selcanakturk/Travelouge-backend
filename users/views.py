@@ -1,16 +1,25 @@
 from rest_framework import generics, permissions, status
 from rest_framework.generics import RetrieveAPIView
 from rest_framework.response import Response
+from rest_framework.decorators import api_view, permission_classes
 from users.models import User
-from django.contrib.auth import get_user_model, authenticate
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.authtoken.models import Token
 from .serializers import UserRegisterSerializer, UserSerializer
+from django.contrib.auth import get_user_model, authenticate
 from django.contrib.auth.hashers import make_password
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.core.mail import send_mail
+
+
 from rest_framework.parsers import MultiPartParser, FormParser
 
 User = get_user_model()
+
+token_generator = PasswordResetTokenGenerator()
 
 class UserRegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -97,3 +106,53 @@ class PublicUserProfileView(RetrieveAPIView):
      serializer_class = UserSerializer
      permission_classes = [AllowAny]
      lookup_field = 'id'
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def password_reset_request(request):
+    email = request.data.get('email')
+    if not email:
+        return Response({"error": "Email is required"}, status=400)
+
+    try:
+        user = User.objects.get(email=email)
+    except User.DoesNotExist:
+        return Response({"message": "If the email exists, a reset link will be sent."}, status=200)
+
+    uid = urlsafe_base64_encode(force_bytes(user.pk))
+    token = token_generator.make_token(user)
+
+    reset_url = f"https://fed5-78-185-17-207.ngrok-free.app/reset-password.html?uid={uid}&token={token}"
+    send_mail(
+        subject="Şifre Sıfırlama Talebi",
+        message=f"Şifrenizi sıfırlamak için aşağıdaki bağlantıya tıklayın:\n{reset_url}",
+        from_email="noreply@travelouge.com",
+        recipient_list=[user.email],
+        fail_silently=False,
+    )
+
+    return Response({"message": "If the email exists, a reset link was sent."}, status=200)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def password_reset_confirm(request):
+    uidb64 = request.data.get('uid')
+    token = request.data.get('token')
+    new_password = request.data.get('new_password')
+
+    if not uidb64 or not token or not new_password:
+        return Response({"error": "All fields are required"}, status=400)
+
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
+    except (User.DoesNotExist, ValueError, TypeError):
+        return Response({"error": "Invalid UID"}, status=400)
+
+    if not token_generator.check_token(user, token):
+        return Response({"error": "Invalid or expired token"}, status=400)
+
+    user.set_password(new_password)
+    user.save()
+
+    return Response({"message": "Password reset successful!"}, status=200)

@@ -5,3 +5,4 @@ djangorestframework
 Pillow
 djangorestframework-simplejwt
 djangorestframework-simplejwt
+gunicorn

@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
 
 User = get_user_model()
 
@@ -30,3 +32,10 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         validated_data.pop('confirm_password')  # Bu alan DB'ye kaydedilmeyecek
         validated_data['password'] = make_password(validated_data['password'])
         return super().create(validated_data)
+    
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        token["username"] = user.username  # Flutter'da decode edilecek alan
+        return token
