@@ -1,1 +1,1 @@
-web: gunicorn travelouge.wsgi
+web: gunicorn travelouge.wsgi:application
