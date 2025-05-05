@@ -122,10 +122,10 @@ def password_reset_request(request):
     uid = urlsafe_base64_encode(force_bytes(user.pk))
     token = token_generator.make_token(user)
 
-    reset_url = f"https://fed5-78-185-17-207.ngrok-free.app/reset-password.html?uid={uid}&token={token}"
+    reset_url = f"https://reset-password-ui-91pg.vercel.app/reset-password.html?uid={uid}&token={token}"
     send_mail(
-        subject="Şifre Sıfırlama Talebi",
-        message=f"Şifrenizi sıfırlamak için aşağıdaki bağlantıya tıklayın:\n{reset_url}",
+        subject="Password Reset Request",
+        message=f"To reset your password, click on the link below:\n{reset_url}",
         from_email="noreply@travelouge.com",
         recipient_list=[user.email],
         fail_silently=False,
