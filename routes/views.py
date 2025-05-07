@@ -3,7 +3,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from routes.models import Route, RouteCoordinate, RouteImage, Like, Comment, SearchLog, ViewedRoute
+from routes.models import Route, RouteCoordinate, RouteImage, Like, Comment, SavedRoute, SearchLog, ViewedRoute
 from routes.serializers import RouteSerializer, RouteImageSerializer, LikeSerializer, CommentSerializer
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
@@ -281,6 +281,28 @@ def suggested_routes(request):
     serializer = RouteSerializer(suggestions, many=True, context={'request': request})
     return Response(serializer.data)
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def user_saved_routes(request):
+    saved_routes = Route.objects.filter(saved_by_users__user=request.user, is_deleted=False) \
+                                .select_related("user") \
+                                .prefetch_related("images", "coordinates") \
+                                .order_by('-saved_by_users__saved_at')
+    serializer = RouteSerializer(saved_routes, many=True, context={'request': request})
+    return Response(serializer.data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def is_saved(request, pk):
+    try:
+        route = Route.objects.get(pk=pk)
+    except Route.DoesNotExist:
+        return Response({"error": "Route not found"}, status=404)
+
+    is_saved = SavedRoute.objects.filter(user=request.user, route=route).exists()
+    return Response({
+        "is_saved": is_saved
+    })
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def toggle_like(request, pk):
@@ -306,6 +328,21 @@ def log_search_view(request):
 
     SearchLog.objects.create(user=request.user, term=term.lower())
     return Response({"message": "Search term logged."}, status=201)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def toggle_save_route(request, pk):
+    try:
+        route = Route.objects.get(pk=pk)
+    except Route.DoesNotExist:
+        return Response({"error": "Route not found"}, status=404)
+
+    saved, created = SavedRoute.objects.get_or_create(user=request.user, route=route)
+
+    if not created:
+        saved.delete()
+        return Response({"saved": False})
+    return Response({"saved": True})
     
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])

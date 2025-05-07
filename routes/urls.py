@@ -1,6 +1,6 @@
 from django.urls import path, include
 from routes import views
-from routes.views import comments_list_create, log_search_view, public_route_list, route_list, route_detail ,toggle_like, comment_list_create, popular_routes, suggested_routes
+from routes.views import comments_list_create, log_search_view, public_route_list, route_list, route_detail ,toggle_like, comment_list_create, popular_routes, suggested_routes, toggle_save_route, user_saved_routes
 
 
 urlpatterns = [
@@ -14,5 +14,7 @@ urlpatterns = [
     path('routes/popular/', popular_routes, name='popular-routes'),
     path('routes/suggested/', views.suggested_routes, name='suggested_routes'),
     path('routes/search-log/', log_search_view),
-    
+    path('routes/<int:pk>/save/', toggle_save_route, name='toggle_save_route'),
+    path('routes/saved/', user_saved_routes, name='user_saved_routes'),
+    path('routes/<int:pk>/is-saved/', views.is_saved, name='is_saved'),
 ]

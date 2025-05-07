@@ -54,6 +54,17 @@ class Comment(models.Model):
     def __str__(self):
         return f"{self.user.username} commented on {self.route.title}"
     
+class SavedRoute(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='saved_routes')
+    route = models.ForeignKey(Route, on_delete=models.CASCADE, related_name='saved_by_users')
+    saved_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'route')
+
+    def __str__(self):
+        return f"{self.user.username} saved {self.route.title}"
+    
 class SearchLog(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='search_logs')
     term = models.CharField(max_length=255)

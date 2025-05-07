@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from routes.models import Route, RouteCoordinate, RouteImage
+from routes.models import Route, RouteCoordinate, RouteImage, SavedRoute
 from routes.models import Like, Comment
 
 
@@ -89,3 +89,9 @@ class CommentSerializer(serializers.ModelSerializer):
         if request and obj.user.profile_picture:
             return request.build_absolute_uri(obj.user.profile_picture.url)
         return None
+    
+
+class SavedRouteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SavedRoute
+        fields = '__all__'
