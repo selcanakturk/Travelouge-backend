@@ -97,7 +97,7 @@ MIDDLEWARE = [
 #     "http://your-flutter-app.com"  # Flutter Web için
 # ]
 
-#CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = False
 
 CORS_ALLOWED_ORIGINS = [
     "https://reset-password-ui-91pg.vercel.app",
