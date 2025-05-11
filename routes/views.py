@@ -229,8 +229,9 @@ def suggested_routes(request):
     liked_ids = Like.objects.filter(user=user).values_list('route_id', flat=True)
 
     # Başlangıç queryset'i
-    base_qs = Route.objects.filter(is_deleted=False).exclude(id__in=liked_ids)
-
+    base_qs = Route.objects.filter(is_deleted=False) \
+    .exclude(id__in=liked_ids) \
+    .exclude(user=user) 
     # Skor işlemi için Q objeleri
     top_terms = get_top_search_terms(user)
     viewed_titles = get_viewed_titles(user)
