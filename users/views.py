@@ -58,34 +58,34 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         return self.request.user
 
-def put(self, request, *args, **kwargs):
-    user = self.get_object()
-    old_email = user.email  # Mevcut maili al
+    def put(self, request, *args, **kwargs):
+        user = self.get_object()
+        old_email = user.email  # Mevcut maili al
 
-    if 'profile_picture' in request.FILES:
-        if user.profile_picture:
-            user.profile_picture.delete(save=False)
+        if 'profile_picture' in request.FILES:
+            if user.profile_picture:
+                user.profile_picture.delete(save=False)
 
-    serializer = UserSerializer(user, data=request.data, partial=True, context={'request': request})
-    
-    if serializer.is_valid():
-        updated_user = serializer.save()
+        serializer = UserSerializer(user, data=request.data, partial=True, context={'request': request})
+        
+        if serializer.is_valid():
+            updated_user = serializer.save()
 
-        # E-posta değişmişse kullanıcıya bilgilendirme maili gönder
-        if old_email != updated_user.email:
-            send_mail(
-                subject="Your email has been updated",
-                message="Hi! Your email address has just been changed on Travelouge. If this wasn’t you, please contact support.",
-                from_email="noreply@travelouge.com",
-                recipient_list=[updated_user.email],
-                fail_silently=False,
-            )
+            # E-posta değişmişse kullanıcıya bilgilendirme maili gönder
+            if old_email != updated_user.email:
+                send_mail(
+                    subject="Your email has been updated",
+                    message="Hi! Your email address has just been changed on Travelouge. If this wasn’t you, please contact support.",
+                    from_email="noreply@travelouge.com",
+                    recipient_list=[updated_user.email],
+                    fail_silently=False,
+                )
 
-        return Response(serializer.data)
-    
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.data)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-def get(self, request, *args, **kwargs):
+    def get(self, request, *args, **kwargs):
         user = self.get_object()
         serializer = UserSerializer(user, context={'request': request})
         return Response(serializer.data)
