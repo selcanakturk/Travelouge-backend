@@ -2,6 +2,7 @@ from rest_framework import generics, permissions, status
 from rest_framework.generics import RetrieveAPIView
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
+from travelouge import settings
 from users.models import User
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
@@ -73,13 +74,15 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
 
             # E-posta değişmişse kullanıcıya bilgilendirme maili gönder
             if old_email != updated_user.email:
+                print(" Email değişikliği algılandı, mail gönderiliyor...")
                 send_mail(
                     subject="Your email has been updated",
                     message="Hi! Your email address has just been changed on Travelouge. If this wasn’t you, please contact support.",
-                    from_email="noreply@travelouge.com",
+                    from_email= settings.EMAIL_HOST_USER,
                     recipient_list=[updated_user.email],
                     fail_silently=False,
                 )
+                print(" Mail gönderildi.")
 
             return Response(serializer.data)
         
